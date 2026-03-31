@@ -775,8 +775,8 @@ function openChat(match) {
 function handleChatMessage(d) {
   switch (d.type) {
     case "room_state":
-      // Load history
-      (d.messages || []).forEach(m => renderChatMsg(m, m.senderId === myId));
+      // Load history — suppress auto-play
+      (d.messages || []).forEach(m => renderChatMsg(m, m.senderId === myId, true));
       break;
     case "message":
       renderChatMsg(d, d.isSelf || d.senderId === myId);
@@ -796,7 +796,7 @@ function handleChatMessage(d) {
   }
 }
 
-function renderChatMsg(m, isSelf) {
+function renderChatMsg(m, isSelf, suppressAutoPlay) {
   hideTranslating();
   const container = document.getElementById("chatMessages");
   const div = document.createElement("div");
@@ -828,8 +828,8 @@ function renderChatMsg(m, isSelf) {
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 
-  // Auto-play received voice messages only
-  if (!isSelf && m.translatedAudio) {
+  // Auto-play received voice messages only (not on history load)
+  if (!isSelf && m.translatedAudio && !suppressAutoPlay) {
     try { new Audio(m.translatedAudio).play().catch(() => {}); } catch {}
   }
 }
