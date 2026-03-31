@@ -1,0 +1,11 @@
+node_modules/
+.wrangler/
+.dev.vars
+dist/
+
+# Dead Air remnants (previous hackathon concept, preserved locally)
+src/meme-cards.ts
+src/seance-room.ts
+src/spirits.ts
+PIDGYN_HANDOFF.md
+PIDGYN_ARCHITECTURE.md

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pidgyn — Date Anyone. Speak Any Language.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#faf8f5;--surface:#fff;--surface2:#f5f0eb;--border:#e8e0d8;
+    --text:#2d2a26;--dim:#8a8580;--accent:#e87461;--accent2:#9b7dd4;
+    --accent-soft:#fce8e4;--accent2-soft:#efe8f8;--match-green:#5cb85c;
+    --radius:16px;
+  }
+  body{background:linear-gradient(160deg,#fce8e4 0%,#faf8f5 35%,#f5f0ff 70%,#efe8f8 100%);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;min-height:100dvh;background-attachment:fixed}
+  .screen{display:none;min-height:100vh;min-height:100dvh;flex-direction:column;align-items:center}
+  .screen.active{display:flex}
+
+  /* BUTTONS */
+  .btn{padding:14px 32px;border:none;border-radius:var(--radius);font-family:'Nunito',sans-serif;font-size:1em;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.primary:hover{background:#d4634f;transform:translateY(-1px)}
+  .btn.secondary{background:var(--accent2);color:#fff}
+  .btn.secondary:hover{background:#8a6bc3}
+  .btn.ghost{background:transparent;border:2px solid var(--border);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.small{padding:8px 18px;font-size:.85em}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* LANDING */
+  #landing{justify-content:center;text-align:center;gap:28px;padding:40px 20px;position:relative;overflow:hidden}
+  .logo-area{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1}
+  .logo-text{font-size:2.8em;font-weight:800;letter-spacing:-1px}
+  .logo-text .pid{color:var(--accent)}
+  .logo-text .gyn{color:var(--accent2)}
+  .tagline{color:var(--dim);font-size:1.15em;max-width:380px;line-height:1.6}
+  .landing-btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:10px;z-index:1}
+  .how-it-works{display:flex;gap:20px;max-width:460px;width:100%;z-index:1;flex-wrap:wrap;justify-content:center}
+  .step{flex:1;min-width:120px;background:var(--surface);border-radius:var(--radius);padding:18px 14px;text-align:center;border:1px solid var(--border);transition:all .2s;cursor:pointer;text-decoration:none;display:block}
+  .step:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 4px 16px rgba(232,116,97,.12)}
+  .step-num{font-size:.7em;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .step-icon-svg{margin-bottom:6px}
+  .step-title{font-weight:800;font-size:.9em;color:var(--text);margin-bottom:4px}
+  .step-desc{font-size:.75em;color:var(--dim);line-height:1.4}
+  .floating-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .float-bubble{position:absolute;padding:10px 20px;border-radius:24px;font-size:1.05em;font-weight:700;opacity:.45;animation:floatDrift 12s ease-in-out infinite;backdrop-filter:blur(2px)}
+  @keyframes floatDrift{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-20px) rotate(2deg)}}
+
+  /* SIGNUP */
+  #signup{padding:30px 20px;gap:20px;max-width:440px;width:100%;margin:0 auto}
+  #signup h2{font-size:1.6em;text-align:center;color:var(--text)}
+  .form-group{width:100%;display:flex;flex-direction:column;gap:6px}
+  .form-group label{font-size:.85em;font-weight:700;color:var(--dim)}
+  .form-group input,.form-group select{padding:12px 16px;border:2px solid var(--border);border-radius:var(--radius);font-size:1em;font-family:'Nunito',sans-serif;background:var(--surface);color:var(--text);outline:none}
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+  .voice-bio-area{width:100%;padding:20px;background:var(--surface2);border-radius:var(--radius);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .voice-bio-area .label{font-size:.85em;color:var(--dim)}
+  .record-btn{width:70px;height:70px;border-radius:50%;border:3px solid var(--accent);background:transparent;color:var(--accent);font-size:1.8em;cursor:pointer;transition:all .2s}
+  .record-btn:hover{background:var(--accent-soft)}
+  .record-btn.recording{background:var(--accent);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .bio-status{font-size:.8em;color:var(--dim);min-height:20px}
+  .photo-upload{width:100px;height:100px;border-radius:50%;border:3px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;margin:0 auto;transition:border-color .2s;background:var(--surface2)}
+  .photo-upload:hover{border-color:var(--accent)}
+  .photo-upload img{width:100%;height:100%;object-fit:cover}
+  .photo-upload .placeholder{color:var(--dim);font-size:.8em;text-align:center}
+
+  /* BROWSE */
+  #browse{padding:20px 20px 80px;gap:16px;max-width:500px;width:100%;margin:0 auto}
+  .browse-header{width:100%;display:flex;justify-content:space-between;align-items:center}
+  .browse-header h2{font-size:1.4em}
+  .profile-card{width:100%;background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:12px;transition:all .2s;animation:cardIn .3s ease-out both}
+  .profile-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);transform:translateY(-2px)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .voice-badge{font-size:.65em;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--match-green);color:#fff;margin-left:6px;vertical-align:middle}
+  .profile-top{display:flex;gap:14px;padding:16px;align-items:center}
+  .profile-photo{width:64px;height:64px;border-radius:50%;background:var(--surface2);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .profile-photo img{width:100%;height:100%;object-fit:cover}
+  .profile-photo .initials{font-size:1.4em;font-weight:800;color:var(--accent)}
+  .profile-info{flex:1}
+  .profile-info .name{font-size:1.1em;font-weight:700}
+  .profile-info .lang{font-size:.75em;font-weight:700;padding:2px 10px;border-radius:10px;display:inline-block;margin-top:2px}
+  .profile-actions{display:flex;gap:8px;padding:0 16px 16px}
+  .play-bio-btn{padding:8px 16px;border:2px solid var(--accent2);border-radius:20px;background:transparent;color:var(--accent2);font-family:'Nunito',sans-serif;font-weight:700;font-size:.85em;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+  .play-bio-btn:hover{background:var(--accent2-soft)}
+  .play-bio-btn.playing{background:var(--accent2);color:#fff;animation:audioPulse 1.5s ease-in-out infinite}
+  @keyframes audioPulse{0%,100%{box-shadow:0 0 0 0 rgba(155,125,212,.4)}50%{box-shadow:0 0 0 8px rgba(155,125,212,0)}}
+  .interest-btn{padding:8px 20px;border:2px solid var(--accent);border-radius:20px;background:transparent;color:var(--accent);font-family:'Nunito',sans-serif;font-weight:700;font-size:.85em;cursor:pointer;transition:all .15s}
+  .interest-btn:hover{background:var(--accent);color:#fff;transform:scale(1.05)}
+  .interest-btn:active:not(.sent):not(.matched){transform:scale(.92);transition:transform .06s}
+  .interest-btn.pop{animation:btnPop .4s ease-out}  
+  @keyframes btnPop{0%{transform:scale(.92)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .interest-btn.sent{background:var(--surface2);color:var(--dim);cursor:default;border-color:var(--border);transform:none}
+  .interest-btn.matched{background:var(--match-green);color:#fff;border-color:var(--match-green);cursor:default;transform:none}
+  .profile-bio{padding:0 16px 12px;font-size:.9em;color:var(--dim);line-height:1.4;max-height:4.2em;overflow:hidden;position:relative}
+  .profile-bio.expandable::after{content:'... read more';position:absolute;bottom:0;right:16px;background:var(--surface);padding-left:8px;color:var(--accent);font-size:.8em;cursor:pointer;font-weight:700}
+  .no-profiles{text-align:center;color:var(--dim);padding:40px 20px;font-size:1em}
+
+  /* MATCH POPUP */
+  .match-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+  .match-overlay.active{display:flex}
+  .match-card{background:var(--surface);border-radius:var(--radius);padding:40px;text-align:center;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;animation:popIn .3s}
+  @keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+  .match-card h2{font-size:1.8em;color:var(--accent);text-shadow:0 2px 8px rgba(232,116,97,.2)}
+  .match-card p{color:var(--dim)}
+  .match-card .match-emoji{font-size:3em;animation:matchBounce .6s ease-out}
+  @keyframes matchBounce{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .confetti-container{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
+  .confetti{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.8s ease-out forwards}
+  @keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  /* MATCHES LIST */
+  #matches{padding:20px 20px 80px;gap:16px;max-width:500px;width:100%;margin:0 auto}
+  .match-item{display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:all .2s;width:100%}
+  .match-item:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  .match-item .match-name{font-weight:700;font-size:1em}
+  .match-item .match-lang{font-size:.8em;color:var(--dim)}
+
+  /* CHAT */
+  #chat{padding:0;gap:0;max-width:500px;width:100%;margin:0 auto;height:100vh;height:100dvh}
+  .chat-header{width:100%;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+  .chat-header .back-btn{background:none;border:none;font-size:1.4em;cursor:pointer;color:var(--dim);padding:0}
+  .chat-header .chat-name{font-weight:700;font-size:1.1em}
+  .chat-header .chat-lang{font-size:.8em;color:var(--dim)}
+  .chat-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:80%;display:flex;flex-direction:column;gap:3px;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .msg.self{align-self:flex-end}
+  .msg.other{align-self:flex-start}
+  .msg-bubble{padding:10px 16px;border-radius:18px;font-size:.95em;line-height:1.4;position:relative}
+  .msg.self .msg-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .msg.other .msg-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+  .msg-translated{font-size:.8em;color:var(--dim);padding:0 4px}
+  .msg.self .msg-translated{text-align:right}
+  .msg-audio-btn{background:none;border:none;cursor:pointer;font-size:.9em;color:var(--accent2);padding:2px 4px;font-family:'Nunito',sans-serif;font-weight:600}
+  .msg-audio-btn:hover{text-decoration:underline}
+  .msg-time{font-size:.7em;color:var(--dim);padding:0 4px}
+  .msg.self .msg-time{text-align:right}
+  .translating-indicator{align-self:flex-start;color:var(--dim);font-style:italic;font-size:.85em;padding:4px 0;animation:pulse 1.5s infinite}
+  .chat-input-area{width:100%;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+  .chat-input-area input{flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:24px;font-size:.95em;font-family:'Nunito',sans-serif;outline:none;background:var(--bg)}
+  .chat-input-area input:focus{border-color:var(--accent)}
+  .send-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:1.1em;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0;line-height:1}
+  .send-btn:hover{background:#d4634f}
+  .mic-chat-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent2);background:transparent;color:var(--accent2);font-size:1.2em;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .mic-chat-btn:hover{background:var(--accent2-soft)}
+  .mic-chat-btn.recording{background:var(--accent);border-color:var(--accent);color:#fff;animation:pulse 1s infinite}
+
+  /* NAV */
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:center;gap:40px;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:50}
+  .nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--dim);font-family:'Nunito',sans-serif;font-size:.7em;font-weight:700;padding:4px 12px;transition:color .2s}
+  .nav-btn.active{color:var(--accent)}
+  .nav-btn .nav-icon{font-size:1.6em}
+  .nav-badge{background:var(--accent);color:#fff;font-size:.65em;padding:1px 5px;border-radius:8px;min-width:16px;text-align:center}
+
+  @media(max-width:500px){
+    .logo-text{font-size:2.2em}
+  }
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing" class="screen active">
+  <div class="floating-bubbles">
+    <span class="float-bubble" style="top:8%;left:6%;background:var(--accent-soft);color:var(--accent);animation-delay:0s">Hola</span>
+    <span class="float-bubble" style="top:18%;right:8%;background:var(--accent2-soft);color:var(--accent2);animation-delay:2s">&#12371;&#12435;&#12395;&#12385;&#12399;</span>
+    <span class="float-bubble" style="top:55%;left:3%;background:var(--accent2-soft);color:var(--accent2);animation-delay:4s">Bonjour</span>
+    <span class="float-bubble" style="top:38%;right:4%;background:var(--accent-soft);color:var(--accent);animation-delay:1s">Kamusta</span>
+    <span class="float-bubble" style="bottom:22%;left:12%;background:var(--accent-soft);color:var(--accent);animation-delay:3s">Ol&#225;</span>
+    <span class="float-bubble" style="bottom:35%;right:8%;background:var(--accent2-soft);color:var(--accent2);animation-delay:5s">&#50504;&#45397;</span>
+    <span class="float-bubble" style="top:70%;right:18%;background:var(--accent-soft);color:var(--accent);animation-delay:1.5s">Ciao</span>
+    <span class="float-bubble" style="top:30%;left:14%;background:var(--accent2-soft);color:var(--accent2);animation-delay:3.5s">&#20320;&#22909;</span>
+    <span class="float-bubble" style="bottom:12%;right:25%;background:var(--accent-soft);color:var(--accent);animation-delay:6s">Hallo</span>
+    <span class="float-bubble" style="top:78%;left:22%;background:var(--accent2-soft);color:var(--accent2);animation-delay:4.5s">&#1605;&#1585;&#1581;&#1576;&#1575;</span>
+    <span class="float-bubble" style="top:5%;left:35%;background:var(--accent-soft);color:var(--accent);animation-delay:7s">Xin ch&#224;o</span>
+    <span class="float-bubble" style="bottom:8%;left:40%;background:var(--accent2-soft);color:var(--accent2);animation-delay:2.5s">Namaste</span>
+  </div>
+  <div class="logo-area">
+    <div class="logo-text"><span class="pid">pid</span><span class="gyn">gyn</span></div>
+    <p class="tagline">Date anyone. Speak any language. Your voice, their language.</p>
+  </div>
+  <div class="how-it-works">
+    <div class="step" onclick="showScreen('signup')">
+      <div class="step-icon-svg"><img src="/mic.png" alt="Record" width="55" height="55"></div>
+      <div class="step-title">Record</div>
+      <div class="step-desc">Record a voice bio. We clone your voice instantly.</div>
+    </div>
+    <div class="step" onclick="showScreen('signup')">
+      <div class="step-icon-svg"><img src="/globe.png" alt="Browse" width="48" height="48"></div>
+      <div class="step-title">Browse</div>
+      <div class="step-desc">See profiles worldwide. No language barrier.</div>
+    </div>
+    <div class="step" onclick="showScreen('signup')">
+      <div class="step-icon-svg"><img src="/message.png" alt="Connect" width="48" height="48"></div>
+      <div class="step-title">Connect</div>
+      <div class="step-desc">Hear them in your language. Chat translated in real time.</div>
+    </div>
+  </div>
+  <div class="landing-btns">
+    <button class="btn primary" onclick="showScreen('signup')">Get Started</button>
+  </div>
+</div>
+
+<!-- SIGNUP -->
+<div id="signup" class="screen">
+  <h2>Create Your Profile</h2>
+  <div class="photo-upload" id="photoUpload" onclick="triggerPhotoUpload()">
+    <span class="placeholder" id="photoPlaceholder">+ Photo</span>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+  </div>
+  <div class="form-group">
+    <label>Your Name</label>
+    <input type="text" id="signupName" placeholder="What should people call you?">
+  </div>
+  <div class="form-group">
+    <label>Your Language</label>
+    <select id="signupLang">
+      <option value="en">English</option>
+      <option value="es">Spanish</option>
+      <option value="ja">Japanese</option>
+      <option value="ko">Korean</option>
+      <option value="fr">French</option>
+      <option value="pt">Portuguese</option>
+      <option value="zh">Chinese</option>
+      <option value="de">German</option>
+      <option value="ar">Arabic</option>
+      <option value="hi">Hindi</option>
+      <option value="it">Italian</option>
+      <option value="ru">Russian</option>
+      <option value="th">Thai</option>
+      <option value="vi">Vietnamese</option>
+      <option value="tl">Filipino</option>
+    </select>
+  </div>
+  <div class="voice-bio-area">
+    <div class="label">Record a voice bio (30 sec)</div>
+    <div class="label" style="font-size:.75em">Introduce yourself! Others will hear this translated into their language.</div>
+    <button class="record-btn" id="bioRecordBtn" onclick="toggleBioRecord()">&#127908;</button>
+    <div class="bio-status" id="bioStatus"></div>
+  </div>
+  <button class="btn primary" id="createProfileBtn" onclick="submitProfile()" style="width:100%">Create Profile</button>
+</div>
+
+<!-- BROWSE -->
+<div id="browse" class="screen">
+  <div class="browse-header">
+    <div>
+      <h2>Discover</h2>
+      <div style="font-size:.8em;color:var(--dim);margin-top:2px">Tap "Hear" to listen in your language</div>
+    </div>
+    <button class="btn ghost small" onclick="loadProfiles()">Refresh</button>
+  </div>
+  <div id="profileList"></div>
+</div>
+
+<!-- MATCHES -->
+<div id="matches" class="screen">
+  <div style="width:100%">
+    <h2>Your Matches</h2>
+    <div style="font-size:.8em;color:var(--dim);margin-top:2px">Start chatting across languages</div>
+  </div>
+  <div id="matchList"></div>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="screen">
+  <div class="chat-header">
+    <button class="back-btn" onclick="showScreen('matches');loadMatches()">&#8592;</button>
+    <div>
+      <div class="chat-name" id="chatPartnerName">...</div>
+      <div class="chat-lang" id="chatPartnerLang">...</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input-area">
+    <button class="mic-chat-btn" id="chatMicBtn" onclick="toggleChatMic()"><img src="/mic.png" alt="mic" width="22" height="22" style="vertical-align:middle"></button>
+    <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+    <button class="send-btn" onclick="sendChatMessage()"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/></svg></button>
+  </div>
+</div>
+
+<!-- MATCH POPUP -->
+<div class="match-overlay" id="matchOverlay">
+  <div class="match-card">
+    <div class="match-emoji">&#128150;</div>
+    <h2>It's a Match!</h2>
+    <p id="matchText">You and someone like each other!</p>
+    <button class="btn primary" onclick="closeMatch(true)">Start Chatting</button>
+    <button class="btn ghost small" onclick="closeMatch(false)">Keep Browsing</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav" style="display:none">
+  <button class="nav-btn" onclick="showScreen('browse');loadProfiles()" id="navBrowse">
+    <span class="nav-icon">&#128269;</span>Discover
+  </button>
+  <button class="nav-btn" onclick="showScreen('matches');loadMatches()" id="navMatches">
+    <span class="nav-icon">&#128140;</span>Matches
+  </button>
+</div>
+
+<script>
+// --- WAV ENCODER ---
+// Convert WebM audio blob to WAV base64 via AudioContext decode
+async function webmToWavBase64(webmBlob) {
+  const arrayBuffer = await webmBlob.arrayBuffer();
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+  audioCtx.close();
+
+  // Downmix to mono
+  const samples = decoded.getChannelData(0);
+  const sampleRate = decoded.sampleRate;
+
+  // Encode as 16-bit PCM WAV
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  // WAV header
+  const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+
+  // PCM samples
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    offset += 2;
+  }
+
+  // Convert to base64
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+// --- STATE ---
+let myId = localStorage.getItem("pidgyn_id") || crypto.randomUUID();
+localStorage.setItem("pidgyn_id", myId);
+let myProfile = null;
+let myPhoto = "";
+let bioAudio = null;  // base64
+let bioText = "";
+let chatWs = null;
+let currentChatRoom = null;
+let currentPartner = null;
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+
+const LANG_NAMES = {en:"English",es:"Spanish",ja:"Japanese",ko:"Korean",fr:"French",pt:"Portuguese",zh:"Chinese",de:"German",ar:"Arabic",hi:"Hindi",it:"Italian",ru:"Russian",th:"Thai",vi:"Vietnamese",tl:"Filipino"};
+const LANG_COLORS = {en:['#3b82f6','#dbeafe'],es:['#f59e0b','#fef3c7'],ja:['#ef4444','#fee2e2'],ko:['#8b5cf6','#ede9fe'],fr:['#3b82f6','#dbeafe'],pt:['#22c55e','#dcfce7'],zh:['#ef4444','#fee2e2'],de:['#6b7280','#f3f4f6'],ar:['#059669','#d1fae5'],hi:['#f97316','#ffedd5'],it:['#16a34a','#dcfce7'],ru:['#2563eb','#dbeafe'],th:['#a855f7','#f3e8ff'],vi:['#dc2626','#fee2e2'],tl:['#e87461','#fce8e4']};
+
+// --- SCREENS ---
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const nav = document.getElementById("bottomNav");
+  const showNav = ["browse", "matches"].includes(id);
+  nav.style.display = showNav ? "flex" : "none";
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  const navBtn = document.getElementById("nav" + id.charAt(0).toUpperCase() + id.slice(1));
+  if (navBtn) navBtn.classList.add("active");
+}
+
+// --- PHOTO ---
+function triggerPhotoUpload() {
+  const input = document.getElementById('photoInput');
+  input.value = '';  // Reset so same file can be re-selected
+  input.click();
+}
+
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = () => {
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 200;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      myPhoto = canvas.toDataURL('image/jpeg', 0.5);
+      const upload = document.getElementById('photoUpload');
+      document.getElementById('photoPlaceholder').style.display = 'none';
+      // Remove old preview if exists
+      const oldImg = upload.querySelector('img');
+      if (oldImg) oldImg.remove();
+      const imgEl = document.createElement('img');
+      imgEl.src = myPhoto;
+      imgEl.alt = 'photo';
+      upload.appendChild(imgEl);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// --- VOICE BIO ---
+async function toggleBioRecord() {
+  const btn = document.getElementById("bioRecordBtn");
+  const status = document.getElementById("bioStatus");
+
+  const micImg = '<img src="/mic.png" alt="mic" width="22" height="22" style="vertical-align:middle">';
+  if (isRecording) {
+    isRecording = false;
+    btn.classList.remove("recording");
+    btn.innerHTML = micImg;
+    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        bioAudio = reader.result.split(",")[1];
+        status.textContent = "Transcribing...";
+
+        // Send to STT
+        try {
+          const res = await fetch("/api/stt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audio: bioAudio }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            bioText = data.text || "";
+            status.textContent = bioText ? `"${bioText.substring(0, 80)}${bioText.length > 80 ? '...' : ''}"` : "Voice recorded!";
+            document.getElementById('createProfileBtn').disabled = false;
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            console.error("STT error:", errData);
+            status.textContent = "Voice recorded! (transcription failed)";
+              document.getElementById('createProfileBtn').disabled = false;
+              }
+            } catch (err) {
+            console.error("STT fetch error:", err);
+        status.textContent = "Voice recorded! (transcription unavailable)";
+        document.getElementById('createProfileBtn').disabled = false;
+        }
+      };
+      reader.readAsDataURL(blob);
+    };
+
+    // Auto-stop after 30 seconds
+    mediaRecorder.start();
+    isRecording = true;
+    btn.classList.add("recording");
+    btn.innerHTML = "&#9632;"; // square = stop
+    status.textContent = "Recording... (tap to stop)";
+    document.getElementById('createProfileBtn').disabled = true;
+
+    setTimeout(() => {
+      if (isRecording) {
+        isRecording = false;
+        btn.classList.remove("recording");
+        btn.innerHTML = "&#127908;";
+        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      }
+    }, 30000);
+  } catch {
+    status.textContent = "Mic not available.";
+  }
+}
+
+// --- SIGNUP ---
+async function submitProfile() {
+  const name = document.getElementById("signupName").value.trim();
+  const language = document.getElementById("signupLang").value;
+
+  if (!name) return alert("Enter your name!");
+
+  try {
+    const res = await fetch("/api/user/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: myId,
+        name,
+        language,
+        photo: myPhoto,
+        voiceBioAudio: bioAudio || "",
+        voiceBioText: bioText || "",
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      myProfile = data.profile;
+
+      // Clone voice in background if we have audio (non-blocking)
+      if (bioAudio) {
+        (async () => {
+          try {
+            // Convert WebM to WAV for better ElevenLabs compatibility
+            const webmBlob = new Blob(
+              [Uint8Array.from(atob(bioAudio), c => c.charCodeAt(0))],
+              { type: 'audio/webm' }
+            );
+            console.log('Converting voice bio to WAV...');
+            const wavBase64 = await webmToWavBase64(webmBlob);
+            console.log('WAV conversion done, sending to clone endpoint...');
+
+            const res = await fetch("/api/clone-voice", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: myId, name, audio: wavBase64, format: 'wav' }),
+            });
+            const d = await res.json();
+            if (d.voiceId) {
+              myProfile.clonedVoiceId = d.voiceId;
+              console.log("Voice cloned! ID:", d.voiceId);
+            } else {
+              console.log("Voice clone failed:", d.error || 'unknown');
+            }
+          } catch (err) {
+            console.log("Voice clone unavailable:", err.message);
+          }
+        })();
+      }
+
+      showScreen("browse");
+      document.getElementById("bottomNav").style.display = "flex";
+      loadProfiles();
+    } else {
+      alert("Error: " + (data.error || "Unknown"));
+    }
+  } catch (err) {
+    alert("Connection error: " + err);
+  }
+}
+
+// --- BROWSE ---
+async function loadProfiles() {
+  const list = document.getElementById("profileList");
+  list.innerHTML = '<div class="no-profiles">Loading...</div>';
+
+  try {
+    const res = await fetch(`/api/user/browse?userId=${myId}`);
+    const data = await res.json();
+    const profiles = data.profiles || [];
+
+    if (profiles.length === 0) {
+      list.innerHTML = '<div class="no-profiles">No one here yet. Share the app and check back!</div>';
+      return;
+    }
+
+    list.innerHTML = "";
+    profiles.forEach((p, idx) => {
+      const initials = p.name.substring(0, 2).toUpperCase();
+      const langName = LANG_NAMES[p.language] || p.language;
+      const lc = LANG_COLORS[p.language] || ['#8a8580','#f5f0eb'];
+      const hasClone = !!p.clonedVoiceId;
+      const card = document.createElement("div");
+      card.className = "profile-card";
+      card.style.animationDelay = (idx * 0.08) + 's';
+      card.innerHTML = `
+        <div class="profile-top">
+          <div class="profile-photo">
+            ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : `<span class="initials">${initials}</span>`}
+          </div>
+          <div class="profile-info">
+            <div class="name">${esc(p.name)}${hasClone ? '<span class="voice-badge">voice cloned</span>' : ''}</div>
+            <div class="lang" style="color:${lc[0]};background:${lc[1]}">${langName}</div>
+          </div>
+        </div>
+        ${p.voiceBioText ? `<div class="profile-bio">"${esc(truncBio(p.voiceBioText))}"</div>` : ''}
+        <div class="profile-actions">
+          ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}')">${hasClone ? '&#127908; Hear their voice in ' : '&#9654; Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
+          <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : '')}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? '&#10003; Matched' : (myProfile?.interests?.includes(p.userId) ? '&#10003; Sent' : '&#9829; Send Interest')}</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    list.innerHTML = `<div class="no-profiles">Error loading profiles</div>`;
+  }
+}
+
+async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId) {
+  if (!text || !myProfile) return;
+  btn.textContent = "Loading...";
+  btn.disabled = true;
+  try {
+    const payload = {
+      textToTranslate: text,
+      sourceLang,
+      targetLang: myProfile.language,
+    };
+    if (clonedVoiceId) payload.voiceId = clonedVoiceId;
+    const res = await fetch("/api/translate-bio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) {
+      console.error("TTS server error:", data.error);
+      alert("Voice error: " + data.error);
+      btn.textContent = "\u25B6 Retry";
+      btn.disabled = false;
+      return;
+    }
+    if (data.audio) {
+      const a = new Audio(data.audio);
+      btn.classList.add('playing');
+      btn.textContent = "\u266B Playing...";
+      a.onended = () => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Play again"; btn.disabled = false; };
+      a.onerror = () => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Retry"; btn.disabled = false; };
+      a.play().catch(() => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Retry"; btn.disabled = false; });
+    } else {
+      alert("Translation: " + (data.translatedText || "?") + "\n\nBut TTS returned no audio. Check console.");
+      btn.textContent = "\u25B6 Retry";
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert("Network error: " + err.message);
+    btn.textContent = "\u25B6 Retry";
+    btn.disabled = false;
+  }
+}
+
+async function expressInterest(targetId, targetName) {
+  const btn = document.getElementById("interest-" + targetId);
+  if (btn) { btn.textContent = "..."; btn.disabled = true; }
+  haptic(15);
+
+  try {
+    const res = await fetch("/api/user/interest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: myId, targetId }),
+    });
+    const data = await res.json();
+
+    if (data.matched) {
+      // Show match popup
+      document.getElementById("matchText").textContent = `You and ${targetName} like each other!`;
+      document.getElementById("matchOverlay").classList.add("active");
+      fireConfetti();
+      haptic([50, 30, 100]);
+      if (btn) { btn.innerHTML = "&#10003; Matched"; btn.className = "interest-btn matched"; }
+    } else {
+      if (btn) { btn.innerHTML = "&#10003; Sent"; btn.className = "interest-btn sent pop"; }
+      haptic(30);
+    }
+  } catch (err) {
+    if (btn) { btn.textContent = "Error"; btn.disabled = false; }
+  }
+}
+
+function closeMatch(startChat) {
+  document.getElementById("matchOverlay").classList.remove("active");
+  if (startChat) {
+    // Refresh profile to get updated matches
+    refreshProfile().then(() => {
+      showScreen("matches");
+      loadMatches();
+    });
+  }
+}
+
+async function refreshProfile() {
+  try {
+    const res = await fetch(`/api/user/profile?userId=${myId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.profile) myProfile = data.profile;
+    }
+  } catch {}
+}
+
+// --- MATCHES ---
+async function loadMatches() {
+  const list = document.getElementById("matchList");
+  list.innerHTML = '<div class="no-profiles">Loading...</div>';
+
+  try {
+    const res = await fetch(`/api/user/matches?userId=${myId}`);
+    const data = await res.json();
+    const matchList = data.matches || [];
+
+    if (matchList.length === 0) {
+      list.innerHTML = '<div class="no-profiles">No matches yet. Keep browsing!</div>';
+      return;
+    }
+
+    list.innerHTML = "";
+    matchList.forEach(m => {
+      const langName = LANG_NAMES[m.language] || m.language;
+      const lc = LANG_COLORS[m.language] || ['#8a8580','#f5f0eb'];
+      const initials = m.name.substring(0, 2).toUpperCase();
+      const item = document.createElement("div");
+      item.className = "match-item";
+      item.onclick = () => openChat(m);
+      item.innerHTML = `
+        <div class="profile-photo">
+          ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : `<span class="initials">${initials}</span>`}
+        </div>
+        <div style="flex:1">
+          <div class="match-name">${esc(m.name)}</div>
+          <div class="match-lang"><span style="font-size:.85em;color:${lc[0]};font-weight:700;background:${lc[1]};padding:1px 8px;border-radius:8px">${langName}</span></div>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  } catch {
+    list.innerHTML = '<div class="no-profiles">Error loading matches</div>';
+  }
+}
+
+// --- CHAT ---
+function openChat(match) {
+  currentPartner = match;
+  currentChatRoom = match.chatRoomId;
+  document.getElementById("chatPartnerName").textContent = match.name;
+  document.getElementById("chatPartnerLang").textContent = "Speaks " + (LANG_NAMES[match.language] || match.language);
+  document.getElementById("chatMessages").innerHTML = "";
+  document.getElementById("chatInput").value = "";
+  showScreen("chat");
+
+  // Connect WebSocket
+  if (chatWs) { chatWs.close(); chatWs = null; }
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  chatWs = new WebSocket(`${proto}//${location.host}/api/chat/${currentChatRoom}?userId=${myId}`);
+
+  chatWs.onopen = () => {
+    chatWs.send(JSON.stringify({
+      type: "join",
+      name: myProfile?.name || "You",
+      language: myProfile?.language || "en",
+      clonedVoiceId: myProfile?.clonedVoiceId || "",
+    }));
+  };
+
+  chatWs.onmessage = e => {
+    const data = JSON.parse(e.data);
+    handleChatMessage(data);
+  };
+
+  chatWs.onclose = () => { chatWs = null; };
+}
+
+function handleChatMessage(d) {
+  switch (d.type) {
+    case "room_state":
+      // Load history
+      (d.messages || []).forEach(m => renderChatMsg(m, m.senderId === myId));
+      break;
+    case "message":
+      renderChatMsg(d, d.isSelf || d.senderId === myId);
+      break;
+    case "translating":
+      showTranslating();
+      break;
+    case "user_joined":
+      break;
+    case "error":
+      hideTranslating();
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'align-self:center;color:var(--accent);font-size:.8em;padding:6px 12px;background:var(--accent-soft);border-radius:12px;margin:4px 0';
+      errDiv.textContent = d.message || 'Something went wrong';
+      document.getElementById('chatMessages').appendChild(errDiv);
+      break;
+  }
+}
+
+function renderChatMsg(m, isSelf) {
+  hideTranslating();
+  const container = document.getElementById("chatMessages");
+  const div = document.createElement("div");
+  div.className = "msg " + (isSelf ? "self" : "other");
+
+  const time = new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  let audioBtn = "";
+  if (m.translatedAudio) {
+    audioBtn = `<button class="msg-audio-btn" onclick="playMsgAudio(this)" data-audio="${m.translatedAudio}">&#9654; Listen</button>`;
+  }
+
+  if (isSelf) {
+    div.innerHTML = `
+      <div class="msg-bubble">${esc(m.originalText)}</div>
+      <div class="msg-translated">${esc(m.translatedText)}</div>
+      ${audioBtn ? `<div>${audioBtn}</div>` : ''}
+      <div class="msg-time">${time}</div>
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="msg-bubble">${esc(m.translatedText)}</div>
+      ${audioBtn ? `<div>${audioBtn}</div>` : ''}
+      <div class="msg-translated" style="font-style:italic">${esc(m.originalText)}</div>
+      <div class="msg-time">${m.senderName} · ${time}</div>
+    `;
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+
+  // Auto-play received voice messages only
+  if (!isSelf && m.translatedAudio) {
+    try { new Audio(m.translatedAudio).play().catch(() => {}); } catch {}
+  }
+}
+
+function playMsgAudio(btn) {
+  const audio = btn.dataset.audio;
+  if (audio) new Audio(audio).play().catch(() => {});
+}
+
+function showTranslating() {
+  hideTranslating();
+  const container = document.getElementById("chatMessages");
+  const div = document.createElement("div");
+  div.className = "translating-indicator";
+  div.id = "translatingEl";
+  div.textContent = "Translating...";
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTranslating() {
+  const el = document.getElementById("translatingEl");
+  if (el) el.remove();
+}
+
+function sendChatMessage() {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (!text || !chatWs) return;
+  chatWs.send(JSON.stringify({ type: "text_message", text }));
+  input.value = "";
+}
+
+// --- VOICE IN CHAT ---
+const chatMicIcon = '<img src="/mic.png" alt="mic" width="22" height="22" style="vertical-align:middle">';
+async function toggleChatMic() {
+  const btn = document.getElementById("chatMicBtn");
+
+  if (isRecording) {
+    isRecording = false;
+    btn.classList.remove("recording");
+    btn.innerHTML = chatMicIcon;
+    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      btn.innerHTML = "&#8987;"; // hourglass
+      btn.style.opacity = '0.5';
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const audio = reader.result.split(",")[1];
+        if (chatWs) {
+          try {
+            chatWs.send(JSON.stringify({ type: "voice_message", audio }));
+          } catch (err) {
+            console.error("WebSocket send error:", err);
+          }
+        }
+        btn.innerHTML = chatMicIcon;
+        btn.style.opacity = '1';
+      };
+      reader.readAsDataURL(blob);
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    btn.classList.add("recording");
+    btn.innerHTML = "&#9632;"; // stop square
+
+    // Auto-stop after 15 seconds for chat voice messages
+    setTimeout(() => {
+      if (isRecording) {
+        isRecording = false;
+        btn.classList.remove("recording");
+        btn.innerHTML = chatMicIcon;
+        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      }
+    }, 15000);
+  } catch {
+    alert("Mic not available.");
+  }
+}
+
+// --- INIT ---
+async function init() {
+  // Check if user already has a profile
+  try {
+    const res = await fetch(`/api/user/profile?userId=${myId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.profile) {
+        myProfile = data.profile;
+        showScreen("browse");
+        document.getElementById("bottomNav").style.display = "flex";
+        loadProfiles();
+        return;
+      }
+    }
+  } catch {}
+  showScreen("landing");
+}
+
+function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+// Haptic buzz (mobile only, fails silently on desktop)
+function haptic(ms) { try { navigator.vibrate(ms); } catch {} }
+
+// Confetti burst for matches
+function fireConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  const colors = ['#e87461','#9b7dd4','#f59e0b','#22c55e','#3b82f6','#ef4444'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.top = -10 + 'px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = Math.random() * 0.5 + 's';
+    c.style.animationDuration = (1.2 + Math.random() * 1) + 's';
+    c.style.width = (6 + Math.random() * 6) + 'px';
+    c.style.height = (6 + Math.random() * 6) + 'px';
+    container.appendChild(c);
+  }
+  document.body.appendChild(container);
+  setTimeout(() => container.remove(), 2500);
+}
+
+// Truncate bio for card display (full text still used for TTS)
+function truncBio(text) {
+  if (!text) return '';
+  // Detect repetition (same phrase repeated 3+ times)
+  const words = text.split(/\s+/);
+  if (words.length > 20) {
+    const chunks = [];
+    for (let i = 0; i < words.length; i += 4) chunks.push(words.slice(i, i+4).join(' '));
+    const seen = {};
+    for (const c of chunks) { seen[c] = (seen[c]||0) + 1; }
+    const maxRepeat = Math.max(...Object.values(seen));
+    if (maxRepeat >= 3) return words.slice(0, 12).join(' ') + '...';
+  }
+  if (text.length > 150) return text.substring(0, 147) + '...';
+  return text;
+}
+
+init();
+</script>
+</body>
+</html>
