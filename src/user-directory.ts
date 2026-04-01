@@ -113,9 +113,18 @@ export class UserDirectory extends DurableObject<Env> {
         const myMatches = this.users[userId]?.matches || [];
         const profiles = Object.values(this.users)
           .filter(u => u.userId !== userId && !myMatches.includes(u.userId))
-          .map(u => this.sanitizeProfile(u))
+          .map(u => {
+            const p = this.sanitizeProfile(u);
+            // Check if this person has expressed interest in the viewer
+            p.interestedInMe = (u.interests || []).includes(userId);
+            return p;
+          })
           .sort((a, b) => {
-            // Different language first (the whole point of Pidgyn)
+            // People interested in YOU first (easy matches)
+            const aInterested = a.interestedInMe ? 1 : 0;
+            const bInterested = b.interestedInMe ? 1 : 0;
+            if (bInterested !== aInterested) return bInterested - aInterested;
+            // Different language second (the whole point of Pidgyn)
             const aForeign = a.language !== myLang ? 1 : 0;
             const bForeign = b.language !== myLang ? 1 : 0;
             if (bForeign !== aForeign) return bForeign - aForeign;

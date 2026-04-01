@@ -74,6 +74,7 @@
   .profile-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);transform:translateY(-2px)}
   @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
   .voice-badge{font-size:.65em;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--match-green);color:#fff;margin-left:6px;vertical-align:middle}
+  .interested-badge{font-size:.65em;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--accent);color:#fff;margin-left:6px;vertical-align:middle}
   .profile-top{display:flex;gap:14px;padding:16px;align-items:center}
   .profile-photo{width:64px;height:64px;border-radius:50%;background:var(--surface2);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
   .profile-photo img{width:100%;height:100%;object-fit:cover}
@@ -91,6 +92,8 @@
   .interest-btn:active:not(.sent):not(.matched){transform:scale(.92);transition:transform .06s}
   .interest-btn.pop{animation:btnPop .4s ease-out}  
   @keyframes btnPop{0%{transform:scale(.92)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .interest-btn.matchback{background:var(--accent);color:#fff;border-color:var(--accent);animation:btnPop .6s ease-out}
+  .interest-btn.matchback:hover{background:#d4634f;transform:scale(1.08)}
   .interest-btn.sent{background:var(--surface2);color:var(--dim);cursor:default;border-color:var(--border);transform:none}
   .interest-btn.matched{background:var(--match-green);color:#fff;border-color:var(--match-green);cursor:default;transform:none}
   .profile-bio{padding:0 16px 12px;font-size:.9em;color:var(--dim);line-height:1.4;max-height:4.2em;overflow:hidden;position:relative}
@@ -182,6 +185,17 @@
   .notif-item .notif-type{font-size:.65em;font-weight:800;padding:2px 8px;border-radius:8px;display:inline-block;margin-right:6px}
   .notif-item .notif-type.match{background:var(--match-green);color:#fff}
   .notif-item .notif-type.interest{background:var(--accent-soft);color:var(--accent)}
+  .notif-item{cursor:pointer}
+  .notif-item:hover{box-shadow:0 2px 12px rgba(0,0,0,.06);transform:translateY(-1px)}
+
+  /* PROFILE POPUP */
+  .profile-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:250;padding:20px}
+  .profile-popup-overlay.active{display:flex}
+  .profile-popup{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;animation:popIn .3s}
+  .profile-popup .profile-photo{width:80px;height:80px}
+  .profile-popup .popup-name{font-size:1.2em;font-weight:800}
+  .profile-popup .popup-bio{font-size:.85em;color:var(--dim);text-align:center;line-height:1.4;max-height:80px;overflow:hidden}
+  .profile-popup .popup-actions{display:flex;gap:10px;margin-top:4px}
   .nav-badge{background:var(--accent);color:#fff;font-size:.6em;padding:1px 5px;border-radius:8px;min-width:14px;text-align:center;position:absolute;top:-4px;right:-4px}
   .nav-btn{position:relative}
 
@@ -379,6 +393,17 @@
   </div>
 </div>
 
+<!-- PROFILE POPUP -->
+<div class="profile-popup-overlay" id="profilePopup" onclick="if(event.target===this)closeProfilePopup()">
+  <div class="profile-popup">
+    <div class="profile-photo" id="popupPhoto"><span class="initials" id="popupInitials">??</span></div>
+    <div class="popup-name" id="popupName">...</div>
+    <div id="popupLangBadge" style="font-size:.75em;font-weight:700;padding:2px 10px;border-radius:10px;display:inline-block">...</div>
+    <div class="popup-bio" id="popupBio"></div>
+    <div class="popup-actions" id="popupActions"></div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottomNav" style="display:none">
   <button class="nav-btn" onclick="showScreen('browse');loadProfiles()" id="navBrowse">
@@ -459,6 +484,9 @@ let mediaRecorder = null;
 let audioChunks = [];
 
 const LANG_NAMES = {en:"English",es:"Spanish",ja:"Japanese",ko:"Korean",fr:"French",pt:"Portuguese",zh:"Chinese",de:"German",ar:"Arabic",hi:"Hindi",it:"Italian",ru:"Russian",th:"Thai",vi:"Vietnamese",tl:"Filipino"};
+
+// Audio cache — avoids regenerating TTS on replays
+const audioCache = {};
 const LANG_COLORS = {en:['#3b82f6','#dbeafe'],es:['#f59e0b','#fef3c7'],ja:['#ef4444','#fee2e2'],ko:['#8b5cf6','#ede9fe'],fr:['#3b82f6','#dbeafe'],pt:['#22c55e','#dcfce7'],zh:['#ef4444','#fee2e2'],de:['#6b7280','#f3f4f6'],ar:['#059669','#d1fae5'],hi:['#f97316','#ffedd5'],it:['#16a34a','#dcfce7'],ru:['#2563eb','#dbeafe'],th:['#a855f7','#f3e8ff'],vi:['#dc2626','#fee2e2'],tl:['#e87461','#fce8e4']};
 
 // --- SCREENS ---
@@ -687,14 +715,14 @@ async function loadProfiles() {
             ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : `<span class="initials">${initials}</span>`}
           </div>
           <div class="profile-info">
-            <div class="name">${esc(p.name)}${hasClone ? '<span class="voice-badge">voice cloned</span>' : ''}</div>
+            <div class="name">${esc(p.name)}${hasClone ? '<span class="voice-badge">voice cloned</span>' : ''}${p.interestedInMe ? '<span class="interested-badge">likes you</span>' : ''}</div>
             <div class="lang" style="color:${lc[0]};background:${lc[1]}">${langName}</div>
           </div>
         </div>
         ${p.voiceBioText ? `<div class="profile-bio">"${esc(truncBio(p.voiceBioText))}"</div>` : ''}
         <div class="profile-actions">
           ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}','${p.gender||'female'}')">${hasClone ? '<img src="/mic.png" width="14" height="14" style="vertical-align:middle;margin-right:4px"> Hear their voice in ' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><polygon points="5,3 19,12 5,21"/></svg> Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
-          <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : '')}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? 'Matched' : (myProfile?.interests?.includes(p.userId) ? 'Sent' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" style="vertical-align:middle;margin-right:2px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Send Interest')}</button>
+          <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : (p.interestedInMe ? ' matchback' : ''))}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? 'Matched' : (myProfile?.interests?.includes(p.userId) ? 'Sent' : (p.interestedInMe ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" style="vertical-align:middle;margin-right:2px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Match back!' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" style="vertical-align:middle;margin-right:2px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Send Interest'))}</button>
         </div>
       `;
       list.appendChild(card);
@@ -704,8 +732,28 @@ async function loadProfiles() {
   }
 }
 
+function playAudioWithBtn(audioData, btn) {
+  const a = new Audio(audioData);
+  btn.classList.add('playing');
+  btn.textContent = "Playing...";
+  a.onended = () => { btn.classList.remove('playing'); btn.textContent = "Play again"; btn.disabled = false; };
+  a.onerror = () => { btn.classList.remove('playing'); btn.textContent = "Retry"; btn.disabled = false; };
+  a.play().catch(() => { btn.classList.remove('playing'); btn.textContent = "Retry"; btn.disabled = false; });
+}
+
 async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId, gender) {
   if (!text || !myProfile) return;
+
+  // Cache key: source text hash + target language + voice
+  const cacheKey = `bio_${sourceLang}_${myProfile.language}_${clonedVoiceId||gender||'default'}_${text.substring(0,40)}`;
+
+  // Check cache first
+  if (audioCache[cacheKey]) {
+    btn.disabled = true;
+    playAudioWithBtn(audioCache[cacheKey], btn);
+    return;
+  }
+
   btn.textContent = "Loading...";
   btn.disabled = true;
   try {
@@ -725,25 +773,21 @@ async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId, gender) {
     if (data.error) {
       console.error("TTS server error:", data.error);
       alert("Voice error: " + data.error);
-      btn.textContent = "\u25B6 Retry";
+      btn.textContent = "Retry";
       btn.disabled = false;
       return;
     }
     if (data.audio) {
-      const a = new Audio(data.audio);
-      btn.classList.add('playing');
-      btn.textContent = "\u266B Playing...";
-      a.onended = () => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Play again"; btn.disabled = false; };
-      a.onerror = () => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Retry"; btn.disabled = false; };
-      a.play().catch(() => { btn.classList.remove('playing'); btn.textContent = "\u25B6 Retry"; btn.disabled = false; });
+      audioCache[cacheKey] = data.audio;
+      playAudioWithBtn(data.audio, btn);
     } else {
       alert("Translation: " + (data.translatedText || "?") + "\n\nBut TTS returned no audio. Check console.");
-      btn.textContent = "\u25B6 Retry";
+      btn.textContent = "Retry";
       btn.disabled = false;
     }
   } catch (err) {
     alert("Network error: " + err.message);
-    btn.textContent = "\u25B6 Retry";
+    btn.textContent = "Retry";
     btn.disabled = false;
   }
 }
@@ -1131,6 +1175,7 @@ async function loadNotifications() {
       item.style.animationDelay = (idx * 0.06) + 's';
       const initials = (n.fromName || '??').substring(0, 2).toUpperCase();
       const timeAgo = formatTimeAgo(n.timestamp);
+      item.onclick = () => showProfilePopup(n.fromUserId);
       item.innerHTML = `
         <div class="notif-photo">
           ${n.fromPhoto ? `<img src="${n.fromPhoto}" alt="${esc(n.fromName)}">` : `<span style="font-weight:800;color:var(--accent)">${initials}</span>`}
@@ -1187,6 +1232,73 @@ async function pollNotifications() {
 
 // Poll every 15 seconds
 setInterval(pollNotifications, 15000);
+
+// --- PROFILE POPUP ---
+async function showProfilePopup(userId) {
+  try {
+    const res = await fetch(`/api/user/browse?userId=${myId}`);
+    const data = await res.json();
+    const allProfiles = data.profiles || [];
+    let p = allProfiles.find(pr => pr.userId === userId);
+
+    // Also check matches if not in browse results
+    if (!p) {
+      const mRes = await fetch(`/api/user/matches?userId=${myId}`);
+      const mData = await mRes.json();
+      const match = (mData.matches || []).find(m => m.matchId === userId);
+      if (match) {
+        p = { userId: match.matchId, name: match.name, language: match.language, photo: match.photo, voiceBioText: '', clonedVoiceId: '', gender: '' };
+        p._isMatch = true;
+        p._chatRoomId = match.chatRoomId;
+      }
+    }
+
+    if (!p) { alert('Profile not found'); return; }
+
+    const initials = p.name.substring(0, 2).toUpperCase();
+    const langName = LANG_NAMES[p.language] || p.language;
+    const lc = LANG_COLORS[p.language] || ['#8a8580','#f5f0eb'];
+    const isMatch = p._isMatch || (myProfile?.matches || []).includes(p.userId);
+
+    // Photo
+    const photoEl = document.getElementById('popupPhoto');
+    const oldImg = photoEl.querySelector('img');
+    if (oldImg) oldImg.remove();
+    document.getElementById('popupInitials').style.display = p.photo ? 'none' : 'block';
+    document.getElementById('popupInitials').textContent = initials;
+    if (p.photo) {
+      const img = document.createElement('img');
+      img.src = p.photo; img.alt = p.name;
+      photoEl.appendChild(img);
+    }
+
+    document.getElementById('popupName').textContent = p.name;
+    const badge = document.getElementById('popupLangBadge');
+    badge.textContent = langName; badge.style.color = lc[0]; badge.style.background = lc[1];
+    document.getElementById('popupBio').textContent = p.voiceBioText ? `"${truncBio(p.voiceBioText)}"` : 'No voice bio';
+
+    // Actions
+    const actions = document.getElementById('popupActions');
+    if (isMatch) {
+      const roomId = p._chatRoomId || [myId, p.userId].sort().join('-');
+      actions.innerHTML = `<button class="btn primary" onclick="closeProfilePopup();openChat({matchId:'${p.userId}',name:'${esc(p.name)}',language:'${p.language}',photo:'${p.photo||''}',chatRoomId:'${roomId}'})">Start Chat</button>
+        <button class="btn ghost small" onclick="closeProfilePopup()">Close</button>`;
+    } else {
+      const isInterestedInMe = p.interestedInMe || false;
+      actions.innerHTML = `<button class="btn primary" onclick="closeProfilePopup();expressInterest('${p.userId}','${esc(p.name)}')">${isInterestedInMe ? 'Match back!' : 'Send Interest'}</button>
+        <button class="btn ghost small" onclick="closeProfilePopup()">Close</button>`;
+    }
+
+    document.getElementById('profilePopup').classList.add('active');
+    haptic(10);
+  } catch (err) {
+    console.error('Profile popup error:', err);
+  }
+}
+
+function closeProfilePopup() {
+  document.getElementById('profilePopup').classList.remove('active');
+}
 
 // --- INIT ---
 async function init() {
