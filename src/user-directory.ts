@@ -2,6 +2,17 @@ import { DurableObject } from "cloudflare:workers";
 
 // Single global directory of all users — handles profiles, browsing, and matching
 
+interface Notification {
+  id: string;
+  type: "interest" | "match";
+  fromUserId: string;
+  fromName: string;
+  fromPhoto: string;
+  message: string;
+  read: boolean;
+  timestamp: number;
+}
+
 interface UserProfileData {
   userId: string;
   name: string;
@@ -13,6 +24,7 @@ interface UserProfileData {
   clonedVoiceId: string;   // ElevenLabs cloned voice ID
   interests: string[];     // userIds they've tapped "interested" on
   matches: string[];       // mutual matches
+  notifications: Notification[];
   createdAt: number;
 }
 
@@ -77,6 +89,7 @@ export class UserDirectory extends DurableObject<Env> {
         clonedVoiceId: existing?.clonedVoiceId || "",  // ElevenLabs cloned voice ID
           interests: existing?.interests || [],
           matches: existing?.matches || [],
+          notifications: existing?.notifications || [],
           createdAt: existing?.createdAt || Date.now(),
         };
         await this.saveState();
@@ -135,6 +148,18 @@ export class UserDirectory extends DurableObject<Env> {
         // Add interest if not already there
         if (!user.interests.includes(targetId)) {
           user.interests.push(targetId);
+          // Notify the target that someone is interested
+          if (!target.notifications) target.notifications = [];
+          target.notifications.push({
+            id: crypto.randomUUID(),
+            type: "interest",
+            fromUserId: userId,
+            fromName: user.name,
+            fromPhoto: user.photo,
+            message: `${user.name} is interested in you!`,
+            read: false,
+            timestamp: Date.now(),
+          });
         }
 
         // Check for mutual match
@@ -148,6 +173,29 @@ export class UserDirectory extends DurableObject<Env> {
             target.matches.push(userId);
           }
           matched = true;
+          // Notify both users about the match
+          if (!user.notifications) user.notifications = [];
+          if (!target.notifications) target.notifications = [];
+          user.notifications.push({
+            id: crypto.randomUUID(),
+            type: "match",
+            fromUserId: targetId,
+            fromName: target.name,
+            fromPhoto: target.photo,
+            message: `You matched with ${target.name}!`,
+            read: false,
+            timestamp: Date.now(),
+          });
+          target.notifications.push({
+            id: crypto.randomUUID(),
+            type: "match",
+            fromUserId: userId,
+            fromName: user.name,
+            fromPhoto: user.photo,
+            message: `You matched with ${user.name}!`,
+            read: false,
+            timestamp: Date.now(),
+          });
         }
 
         await this.saveState();
@@ -176,6 +224,43 @@ export class UserDirectory extends DurableObject<Env> {
         }).filter(Boolean);
 
         return Response.json({ matches }, { headers: corsHeaders });
+      }
+
+      // Get notifications
+      if (path === "/notifications" && request.method === "GET") {
+        const userId = url.searchParams.get("userId") || "";
+        const user = this.users[userId];
+        if (!user) return Response.json({ notifications: [], unread: 0 }, { headers: corsHeaders });
+        const notifs = (user.notifications || []).sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
+        const unread = notifs.filter(n => !n.read).length;
+        return Response.json({ notifications: notifs, unread }, { headers: corsHeaders });
+      }
+
+      // Mark notifications as read
+      if (path === "/notifications/read" && request.method === "POST") {
+        const body = await request.json() as any;
+        const { userId } = body;
+        const user = this.users[userId];
+        if (user && user.notifications) {
+          user.notifications.forEach(n => n.read = true);
+          await this.saveState();
+        }
+        return Response.json({ success: true }, { headers: corsHeaders });
+      }
+
+      // Update profile
+      if (path === "/update" && request.method === "POST") {
+        const body = await request.json() as any;
+        const { userId, name, language, gender, photo, voiceBioText } = body;
+        const user = this.users[userId];
+        if (!user) return Response.json({ error: "Not found" }, { status: 404, headers: corsHeaders });
+        if (name) user.name = name;
+        if (language) user.language = language;
+        if (gender) user.gender = gender;
+        if (photo !== undefined) user.photo = photo;
+        if (voiceBioText !== undefined) user.voiceBioText = voiceBioText;
+        await this.saveState();
+        return Response.json({ success: true, profile: this.sanitizeProfile(user) }, { headers: corsHeaders });
       }
 
       // Reset all profiles (admin)
