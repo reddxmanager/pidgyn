@@ -6,22 +6,13 @@ const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 // Replace these with actual voice IDs from https://elevenlabs.io/voice-library
 // Rachel (21m00Tcm4TlvDq8ikWAM) is a default voice available on ALL ElevenLabs accounts
 // eleven_flash_v2_5 for low-latency, high-reliability multilingual TTS
-export const LANGUAGE_VOICES: Record<string, string> = {
-  en: "21m00Tcm4TlvDq8ikWAM",  // Rachel - default female
-  es: "21m00Tcm4TlvDq8ikWAM",
-  ja: "21m00Tcm4TlvDq8ikWAM",
-  ko: "21m00Tcm4TlvDq8ikWAM",
-  fr: "21m00Tcm4TlvDq8ikWAM",
-  pt: "21m00Tcm4TlvDq8ikWAM",
-  zh: "21m00Tcm4TlvDq8ikWAM",
-  de: "21m00Tcm4TlvDq8ikWAM",
-  ar: "21m00Tcm4TlvDq8ikWAM",
-  hi: "21m00Tcm4TlvDq8ikWAM",
-  it: "21m00Tcm4TlvDq8ikWAM",
-  ru: "21m00Tcm4TlvDq8ikWAM",
-  th: "21m00Tcm4TlvDq8ikWAM",
-  vi: "21m00Tcm4TlvDq8ikWAM",
-  tl: "21m00Tcm4TlvDq8ikWAM",
+// Default stock voices — used when user hasn't cloned their voice
+const VOICE_FEMALE = "21m00Tcm4TlvDq8ikWAM"; // Rachel
+const VOICE_MALE = "pNInz6obpgDQGcFmaJgB";   // Adam
+
+export const DEFAULT_VOICES: Record<string, string> = {
+  female: VOICE_FEMALE,
+  male: VOICE_MALE,
 };
 
 export async function textToSpeech(
@@ -70,8 +61,8 @@ export function audioToBase64(audio: ArrayBuffer): string {
   return `data:audio/mpeg;base64,${btoa(binary)}`;
 }
 
-export function getVoiceForLanguage(lang: string): string {
-  return LANGUAGE_VOICES[lang] || LANGUAGE_VOICES["en"];
+export function getVoiceForGender(gender: string): string {
+  return DEFAULT_VOICES[gender] || VOICE_FEMALE;
 }
 
 // Clone a user's voice from their voice bio audio

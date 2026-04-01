@@ -215,6 +215,13 @@
     <input type="text" id="signupName" placeholder="What should people call you?">
   </div>
   <div class="form-group">
+    <label>Voice Type</label>
+    <select id="signupGender">
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+    </select>
+  </div>
+  <div class="form-group">
     <label>Your Language</label>
     <select id="signupLang">
       <option value="en">English</option>
@@ -498,6 +505,7 @@ async function toggleBioRecord() {
 // --- SIGNUP ---
 async function submitProfile() {
   const name = document.getElementById("signupName").value.trim();
+  const gender = document.getElementById("signupGender").value;
   const language = document.getElementById("signupLang").value;
 
   if (!name) return alert("Enter your name!");
@@ -510,6 +518,7 @@ async function submitProfile() {
         userId: myId,
         name,
         language,
+        gender,
         photo: myPhoto,
         voiceBioAudio: bioAudio || "",
         voiceBioText: bioText || "",
@@ -597,7 +606,7 @@ async function loadProfiles() {
         </div>
         ${p.voiceBioText ? `<div class="profile-bio">"${esc(truncBio(p.voiceBioText))}"</div>` : ''}
         <div class="profile-actions">
-          ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}')">${hasClone ? '&#127908; Hear their voice in ' : '&#9654; Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
+          ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}','${p.gender||'female'}')">${hasClone ? '&#127908; Hear their voice in ' : '&#9654; Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
           <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : '')}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? '&#10003; Matched' : (myProfile?.interests?.includes(p.userId) ? '&#10003; Sent' : '&#9829; Send Interest')}</button>
         </div>
       `;
@@ -608,7 +617,7 @@ async function loadProfiles() {
   }
 }
 
-async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId) {
+async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId, gender) {
   if (!text || !myProfile) return;
   btn.textContent = "Loading...";
   btn.disabled = true;
@@ -619,6 +628,7 @@ async function playTranslatedBio(text, sourceLang, btn, clonedVoiceId) {
       targetLang: myProfile.language,
     };
     if (clonedVoiceId) payload.voiceId = clonedVoiceId;
+    if (gender) payload.gender = gender;
     const res = await fetch("/api/translate-bio", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -760,6 +770,7 @@ function openChat(match) {
       type: "join",
       name: myProfile?.name || "You",
       language: myProfile?.language || "en",
+      gender: myProfile?.gender || "female",
       clonedVoiceId: myProfile?.clonedVoiceId || "",
     }));
   };
@@ -937,6 +948,10 @@ async function init() {
         return;
       }
     }
+    // Profile not found — stale session, clear it
+    localStorage.removeItem("pidgyn_id");
+    myId = crypto.randomUUID();
+    localStorage.setItem("pidgyn_id", myId);
   } catch {}
   showScreen("landing");
 }

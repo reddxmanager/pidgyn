@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { translateText } from "./translation";
-import { textToSpeech, audioToBase64, getVoiceForLanguage } from "./elevenlabs";
+import { textToSpeech, audioToBase64, getVoiceForGender } from "./elevenlabs";
 
 interface Env {
   AI: Ai;
@@ -12,6 +12,7 @@ interface Participant {
   userId: string;
   name: string;
   language: string;
+  gender: string;          // "male" or "female" for stock voice fallback
   clonedVoiceId: string;  // Their ElevenLabs cloned voice
 }
 
@@ -112,7 +113,7 @@ export class ChatRoom extends DurableObject<Env> {
   private async handleMessage(userId: string, data: any): Promise<void> {
     switch (data.type) {
       case "join":
-        await this.handleJoin(userId, data.name, data.language, data.clonedVoiceId);
+        await this.handleJoin(userId, data.name, data.language, data.clonedVoiceId, data.gender);
         break;
       case "text_message":
         await this.handleTextMessage(userId, data.text);
@@ -126,8 +127,8 @@ export class ChatRoom extends DurableObject<Env> {
     }
   }
 
-  private async handleJoin(userId: string, name: string, language: string, clonedVoiceId?: string): Promise<void> {
-    this.state.participants[userId] = { userId, name, language, clonedVoiceId: clonedVoiceId || "" };
+  private async handleJoin(userId: string, name: string, language: string, clonedVoiceId?: string, gender?: string): Promise<void> {
+    this.state.participants[userId] = { userId, name, language, gender: gender || "female", clonedVoiceId: clonedVoiceId || "" };
     await this.saveState();
 
     // Send chat history to joining user
@@ -256,7 +257,7 @@ export class ChatRoom extends DurableObject<Env> {
     let translatedAudio: string | null = null;
     try {
       // Use sender's cloned voice if available, otherwise fall back to language default
-      const voiceId = sender.clonedVoiceId || getVoiceForLanguage(receiver.language);
+      const voiceId = sender.clonedVoiceId || getVoiceForGender(sender.gender || "female");
       const audio = await textToSpeech(this.env.ELEVENLABS_API_KEY, voiceId, translatedText);
       translatedAudio = audioToBase64(audio);
     } catch (err) {

@@ -51,9 +51,9 @@ export default {
     // Hit /api/tts-test to verify the ElevenLabs API key + TTS pipeline
 
     if (url.pathname === "/api/tts-test" && request.method === "GET") {
-      const { textToSpeech, getVoiceForLanguage } = await import("./elevenlabs");
+      const { textToSpeech, getVoiceForGender } = await import("./elevenlabs");
       const keyPrefix = env.ELEVENLABS_API_KEY ? env.ELEVENLABS_API_KEY.substring(0, 6) + "..." : "MISSING";
-      const voiceId = getVoiceForLanguage("en");
+      const voiceId = getVoiceForGender("female");
 
       try {
         const audioBuffer = await textToSpeech(env.ELEVENLABS_API_KEY, voiceId, "Hello, this is a test from Pidgyn.");
@@ -77,14 +77,14 @@ export default {
     // Translate a voice bio text to the requesting user's language, return TTS audio
 
     if (url.pathname === "/api/translate-bio" && request.method === "POST") {
-      const { textToTranslate, sourceLang, targetLang, voiceId: requestedVoiceId } = await request.json() as any;
+      const { textToTranslate, sourceLang, targetLang, voiceId: requestedVoiceId, gender: requestedGender } = await request.json() as any;
 
       if (!textToTranslate || !sourceLang || !targetLang) {
         return Response.json({ error: "Missing fields" }, { status: 400, headers: corsHeaders });
       }
 
       const { translateText } = await import("./translation");
-      const { textToSpeech, audioToBase64, getVoiceForLanguage } = await import("./elevenlabs");
+      const { textToSpeech, audioToBase64, getVoiceForGender } = await import("./elevenlabs");
 
       // Translate the bio text
       const translated = await translateText(env.AI, textToTranslate, sourceLang, targetLang);
@@ -93,7 +93,7 @@ export default {
       let audio: string | null = null;
       let ttsError: string | null = null;
       try {
-        const voiceId = requestedVoiceId || getVoiceForLanguage(targetLang);
+        const voiceId = requestedVoiceId || getVoiceForGender(requestedGender || "female");
         console.log("TTS request: voice=", voiceId, "cloned=", !!requestedVoiceId, "text=", translated.substring(0, 50));
         const audioBuffer = await textToSpeech(env.ELEVENLABS_API_KEY, voiceId, translated);
         audio = audioToBase64(audioBuffer);

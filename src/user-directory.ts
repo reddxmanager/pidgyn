@@ -6,6 +6,7 @@ interface UserProfileData {
   userId: string;
   name: string;
   language: string;
+  gender: string;          // "male" or "female"
   photo: string;           // base64 data URL or empty
   voiceBioAudio: string;   // base64 audio of voice bio in their language
   voiceBioText: string;    // STT transcription of voice bio
@@ -58,7 +59,7 @@ export class UserDirectory extends DurableObject<Env> {
       // Create or update profile
       if (path === "/signup" && request.method === "POST") {
         const body = await request.json() as any;
-        const { userId, name, language, photo, voiceBioAudio, voiceBioText } = body;
+        const { userId, name, language, gender, photo, voiceBioAudio, voiceBioText } = body;
 
         if (!userId || !name || !language) {
           return Response.json({ error: "userId, name, and language required" }, { status: 400, headers: corsHeaders });
@@ -69,6 +70,7 @@ export class UserDirectory extends DurableObject<Env> {
           userId,
           name,
           language,
+          gender: gender || "female",
           photo: photo || "",
           voiceBioAudio: "",  // Don't store raw audio — too large for SQLite. Text is enough.
           voiceBioText: voiceBioText || "",
@@ -220,6 +222,7 @@ export class UserDirectory extends DurableObject<Env> {
       voiceBioText: user.voiceBioText,
       voiceBioAudio: user.voiceBioAudio,
       clonedVoiceId: user.clonedVoiceId || "",
+      gender: user.gender || "female",
       createdAt: user.createdAt,
     };
   }
