@@ -275,7 +275,7 @@
   <div class="voice-bio-area">
     <div class="label">Record a voice bio (30 sec)</div>
     <div class="label" style="font-size:.75em">Introduce yourself! Others will hear this translated into their language.</div>
-    <button class="record-btn" id="bioRecordBtn" onclick="toggleBioRecord()">&#127908;</button>
+    <button class="record-btn" id="bioRecordBtn" onclick="toggleBioRecord()"><img src="/mic.png" alt="record" width="28" height="28" style="vertical-align:middle"></button>
     <div class="bio-status" id="bioStatus"></div>
   </div>
   <button class="btn primary" id="createProfileBtn" onclick="submitProfile()" style="width:100%">Create Profile</button>
@@ -305,7 +305,7 @@
 <!-- CHAT -->
 <div id="chat" class="screen">
   <div class="chat-header">
-    <button class="back-btn" onclick="showScreen('matches');loadMatches()">&#8592;</button>
+    <button class="back-btn" onclick="showScreen('matches');loadMatches()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></button>
     <div>
       <div class="chat-name" id="chatPartnerName">...</div>
       <div class="chat-lang" id="chatPartnerLang">...</div>
@@ -371,7 +371,7 @@
 <!-- MATCH POPUP -->
 <div class="match-overlay" id="matchOverlay">
   <div class="match-card">
-    <div class="match-emoji">&#128150;</div>
+    <div class="match-emoji"><svg width="48" height="48" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
     <h2>It's a Match!</h2>
     <p id="matchText">You and someone like each other!</p>
     <button class="btn primary" onclick="closeMatch(true)">Start Chatting</button>
@@ -382,17 +382,17 @@
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottomNav" style="display:none">
   <button class="nav-btn" onclick="showScreen('browse');loadProfiles()" id="navBrowse">
-    <span class="nav-icon">&#128269;</span>Discover
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></span>Discover
   </button>
   <button class="nav-btn" onclick="showScreen('matches');loadMatches()" id="navMatches">
-    <span class="nav-icon">&#128140;</span>Matches
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>Matches
   </button>
   <button class="nav-btn" onclick="showScreen('notifications');loadNotifications()" id="navNotifications">
-    <span class="nav-icon">&#128276;</span>Alerts
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span>Alerts
     <span class="nav-badge" id="notifBadge" style="display:none">0</span>
   </button>
   <button class="nav-btn" onclick="showScreen('profile');loadProfile()" id="navProfile">
-    <span class="nav-icon">&#9881;</span>Profile
+    <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg></span>Profile
   </button>
 </div>
 
@@ -572,7 +572,7 @@ async function toggleBioRecord() {
     mediaRecorder.start();
     isRecording = true;
     btn.classList.add("recording");
-    btn.innerHTML = "&#9632;"; // square = stop
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
     status.textContent = "Recording... (tap to stop)";
     document.getElementById('createProfileBtn').disabled = true;
 
@@ -580,7 +580,7 @@ async function toggleBioRecord() {
       if (isRecording) {
         isRecording = false;
         btn.classList.remove("recording");
-        btn.innerHTML = "&#127908;";
+        btn.innerHTML = micImg;
         if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
       }
     }, 30000);
@@ -693,8 +693,8 @@ async function loadProfiles() {
         </div>
         ${p.voiceBioText ? `<div class="profile-bio">"${esc(truncBio(p.voiceBioText))}"</div>` : ''}
         <div class="profile-actions">
-          ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}','${p.gender||'female'}')">${hasClone ? '&#127908; Hear their voice in ' : '&#9654; Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
-          <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : '')}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? '&#10003; Matched' : (myProfile?.interests?.includes(p.userId) ? '&#10003; Sent' : '&#9829; Send Interest')}</button>
+          ${p.voiceBioText ? `<button class="play-bio-btn" onclick="playTranslatedBio('${esc(p.voiceBioText).replace(/'/g, "\\'")}','${p.language}',this,'${p.clonedVoiceId||''}','${p.gender||'female'}')">${hasClone ? '<img src="/mic.png" width="14" height="14" style="vertical-align:middle;margin-right:4px"> Hear their voice in ' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><polygon points="5,3 19,12 5,21"/></svg> Hear in '}${LANG_NAMES[myProfile?.language||'en']||'your language'}</button>` : '<span style="font-size:.8em;color:var(--dim)">No voice bio</span>'}
+          <button class="interest-btn${myProfile?.matches?.includes(p.userId) ? ' matched' : (myProfile?.interests?.includes(p.userId) ? ' sent' : '')}" id="interest-${p.userId}" onclick="expressInterest('${p.userId}','${esc(p.name)}')">${myProfile?.matches?.includes(p.userId) ? 'Matched' : (myProfile?.interests?.includes(p.userId) ? 'Sent' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" style="vertical-align:middle;margin-right:2px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Send Interest')}</button>
         </div>
       `;
       list.appendChild(card);
@@ -767,9 +767,9 @@ async function expressInterest(targetId, targetName) {
       document.getElementById("matchOverlay").classList.add("active");
       fireConfetti();
       haptic([50, 30, 100]);
-      if (btn) { btn.innerHTML = "&#10003; Matched"; btn.className = "interest-btn matched"; }
+      if (btn) { btn.innerHTML = "Matched"; btn.className = "interest-btn matched"; }
     } else {
-      if (btn) { btn.innerHTML = "&#10003; Sent"; btn.className = "interest-btn sent pop"; }
+      if (btn) { btn.innerHTML = "Sent"; btn.className = "interest-btn sent pop"; }
       haptic(30);
     }
   } catch (err) {
@@ -904,7 +904,7 @@ function renderChatMsg(m, isSelf, suppressAutoPlay) {
 
   let audioBtn = "";
   if (m.translatedAudio) {
-    audioBtn = `<button class="msg-audio-btn" onclick="playMsgAudio(this)" data-audio="${m.translatedAudio}">&#9654; Listen</button>`;
+    audioBtn = `<button class="msg-audio-btn" onclick="playMsgAudio(this)" data-audio="${m.translatedAudio}"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><polygon points="5,3 19,12 5,21"/></svg> Listen</button>`;
   }
 
   if (isSelf) {
@@ -982,7 +982,7 @@ async function toggleChatMic() {
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
     mediaRecorder.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
-      btn.innerHTML = "&#8987;"; // hourglass
+      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
       btn.style.opacity = '0.5';
       const blob = new Blob(audioChunks, { type: "audio/webm" });
       const reader = new FileReader();
@@ -1004,7 +1004,7 @@ async function toggleChatMic() {
     mediaRecorder.start();
     isRecording = true;
     btn.classList.add("recording");
-    btn.innerHTML = "&#9632;"; // stop square
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
 
     // Auto-stop after 15 seconds for chat voice messages
     setTimeout(() => {
